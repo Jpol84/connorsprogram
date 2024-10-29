@@ -10,28 +10,38 @@
 #include "vex.h"
 #include <vector>
 
-const std::vector<Vector2> PATH = {tao::Vector2(0, 0), tao::Vector2(10, 10), tao::Vector2(20, 0)};
-chassis.follow_path(PATH);
+
 
 using namespace vex;
 
 // A global instance of competition
 competition Competition;
 brain Brain;
-controller controller1(primary);
-motor left1(PORT8, ratio6_1,true);
-motor left2(PORT7, ratio6_1,true );
-motor left3top(PORT19, ratio6_1,false);
-motor right1(PORT2, ratio6_1,false );
-motor right2(PORT3, ratio6_1,false );
-motor right3top(PORT1, ratio6_1,true );
+controller pen(primary);
+motor left1(PORT11, ratio6_1,true);
+motor left2(PORT12, ratio6_1,true );
+motor left3top(PORT19, ratio6_1,true);
+motor right1(PORT3, ratio6_1,false );
+motor right2(PORT2, ratio6_1,false );
+motor right3top(PORT5, ratio6_1,false );
 motor_group DriveA(left1,left2,left3top);
 motor_group DriveB(right1,right2,right3top);
-motor intake(PORT20, ratio18_1,false );
+motor lift(PORT1, ratio18_1,false );
 pneumatics rod(Brain.ThreeWirePort.A);
-motor lift(PORT9, ratio36_1, true);
+motor intake(PORT4, ratio36_1,false);
+rotation sensor(PORT4);
+inertial imu(PORT1);
 
-
+tao::DifferentialDrivetrain chassis(left_drive, right_drive, imu, {
+	.drive_gains = { 4.24, 0, 0.06 },
+	.turn_gains = { 0.82, 0.003, 0.0875 },
+	.drive_tolerance = 0.7,
+	.turn_tolerance = 0.34,
+	.lookahead_distance = 10.3,
+	.track_width = 13.75,
+	.wheel_diameter = 3.25,
+	.gearing = (36.0 / 48.0),
+}, tao::Logger(std::cout, tao::Logger::Level::DEBUG));
 // define your global instances of motors and other devices here
 
 /*---------------------------------------------------------------------------*/
@@ -61,11 +71,9 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  tao:: vector2 point(24,24);
-  chassis.turn_to(point);
-  // ..........................................................................
-  // Insert autonomous user code here.
-  // ..........................................................................
+
+
+
 }
 
 /*---------------------------------------------------------------------------*/
@@ -82,26 +90,17 @@ void usercontrol(void) {
   
   // User control code here, inside the loop
   while (1) {
-    DriveA.setVelocity(controller1.Axis3.position(), pct);
-    DriveB.setVelocity(controller1.Axis2.position(), pct);
+    DriveA.setVelocity(pen.Axis3.position(), pct);
+    DriveB.setVelocity(pen.Axis2.position(), pct);
     DriveA.spin(forward);
     DriveB.spin(forward);
-    if (controller1.ButtonR2.pressing() ) {
+    if (pen.ButtonR2.pressing())  {
       intake.spin(reverse);
-    }else if (controller1.ButtonR1.pressing() ) {
+    }else if (pen.ButtonR1.pressing())  {
       intake.spin(forward);
     }else {intake.stop();}
-    intake.setVelocity(100, pct);
-    if(controller1.ButtonL1.pressing() ) {
-      rod.set(true);
-    }else {rod.set(false);}
-    if (controller1.ButtonDown.pressing() ) {
-      Lift.spin(forward);
-    }else if (controller1.ButtonUp.pressing() ) {
-      Lift.spin(reverse);
-    }else {Lift.stop();}
-    Lift.setVelocity(100, pct);
-     
+    
+    
     
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
@@ -120,11 +119,12 @@ void usercontrol(void) {
 //
 // Main will set up the competition functions and callbacks.
 //
-int main() {
-  controller1.ButtonA.pressed([]() {
-   rod.set(!rod);
-  });
 
+int main() {
+   pen.ButtonL1.pressed([]() {
+   rod.set(!rod);
+   });
+  intake.setVelocity(100, pct);
   // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
