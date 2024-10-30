@@ -9,6 +9,7 @@
 
 #include "vex.h"
 #include <vector>
+#include "taolib/taolib.h"
 
 
 
@@ -32,7 +33,7 @@ motor intake(PORT4, ratio36_1,false);
 rotation sensor(PORT4);
 inertial imu(PORT1);
 
-tao::DifferentialDrivetrain chassis(left_drive, right_drive, imu, {
+tao::DifferentialDrivetrain chassis(DriveA, DriveB, imu, {
 	.drive_gains = { 4.24, 0, 0.06 },
 	.turn_gains = { 0.82, 0.003, 0.0875 },
 	.drive_tolerance = 0.7,
